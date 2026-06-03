@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌍 Quiz mit Punktesystem</title>
+
+<style>
+body{
+    font-family: Arial;
+    text-align:center;
+    background:#f4f6f8;
+    padding:20px;
+}
+
+.container{
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    background:#3498db;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{background:#2980b9;}
+
+input{
+    padding:10px;
+    width:250px;
+}
+
+#quizArea{display:none;}
+#adminPanel{display:none; margin-top:20px; background:#eee; padding:15px; border-radius:10px;}
+#flag{font-size:90px;}
+
+.scoreBox{
+    font-size:18px;
+    margin:10px;
+}
+.good{color:green;}
+.bad{color:red;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🌍 Länder & Flaggen Quiz</h1>
+
+<div id="startScreen">
+
+<input id="playerName" placeholder="Dein Name">
+
+<br><br>
+
+<button onclick="startGame('land')">Länder raten</button>
+<button onclick="startGame('flag')">Flaggen raten</button>
+
+<br><br>
+
+<button onclick="openAdmin()">🔐 Admin</button>
+
+</div>
+
+<div id="quizArea">
+
+<h2 id="welcome"></h2>
+
+<div class="scoreBox">
+🏆 Punkte: <span id="score">0</span> |
+✅ Richtig: <span id="correct">0</span> |
+❌ Falsch: <span id="wrong">0</span>
+</div>
+
+<hr>
+
+<div id="question"></div>
+<div id="flag"></div>
+
+<br>
+
+<input id="answer" placeholder="Antwort">
+
+<br><br>
+
+<button onclick="checkAnswer()">Prüfen</button>
+
+<p id="result"></p>
+
+</div>
+
+<div id="adminPanel">
+<h2>🔐 Admin Menü</h2>
+<div id="adminContent"></div>
+<button onclick="closeAdmin()">Schließen</button>
+</div>
+
+</div>
+
+<script>
+
+let mode="";
+let score=0;
+let correct=0;
+let wrong=0;
+let currentAnswer="";
+let playerName="";
+
+const countries=[
+{country:"Deutschland",capital:"Berlin"},
+{country:"Frankreich",capital:"Paris"},
+{country:"Spanien",capital:"Madrid"},
+{country:"Italien",capital:"Rom"},
+{country:"Portugal",capital:"Lissabon"},
+{country:"Japan",capital:"Tokio"},
+{country:"China",capital:"Peking"},
+{country:"USA",capital:"Washington D.C."},
+{country:"Brasilien",capital:"Brasília"},
+{country:"Russland",capital:"Moskau"}
+];
+
+const flags=[
+{flag:"🇩🇪",country:"Deutschland"},
+{flag:"🇫🇷",country:"Frankreich"},
+{flag:"🇪🇸",country:"Spanien"},
+{flag:"🇮🇹",country:"Italien"},
+{flag:"🇵🇹",country:"Portugal"},
+{flag:"🇯🇵",country:"Japan"},
+{flag:"🇨🇳",country:"China"},
+{flag:"🇺🇸",country:"USA"},
+{flag:"🇧🇷",country:"Brasilien"},
+{flag:"🇷🇺",country:"Russland"}
+];
+
+function startGame(m){
+
+playerName=document.getElementById("playerName").value.trim();
+
+if(playerName===""){
+alert("Name fehlt!");
+return;
+}
+
+mode=m;
+
+savePlayer();
+
+document.getElementById("startScreen").style.display="none";
+document.getElementById("quizArea").style.display="block";
+
+document.getElementById("welcome").innerText="Hallo "+playerName;
+
+nextQuestion();
+}
+
+function nextQuestion(){
+
+document.getElementById("answer").value="";
+document.getElementById("result").innerHTML="";
+
+if(mode==="land"){
+
+let q=countries[Math.floor(Math.random()*countries.length)];
+currentAnswer=q.country;
+
+document.getElementById("flag").innerHTML="";
+document.getElementById("question").innerHTML=
+"Welches Land hat die Hauptstadt <b>"+q.capital+"</b>?";
+
+}else{
+
+let q=flags[Math.floor(Math.random()*flags.length)];
+currentAnswer=q.country;
+
+document.getElementById("question").innerHTML=
+"Welche Flagge ist das?";
+document.getElementById("flag").innerHTML=q.flag;
+}
+}
+
+function checkAnswer(){
+
+let ans=document.getElementById("answer").value.trim();
+
+if(ans.toLowerCase()===currentAnswer.toLowerCase()){
+
+score++;
+correct++;
+
+document.getElementById("result").innerHTML=
+"<span class='good'>✅ Richtig!</span>";
+
+}else{
+
+score--;
+wrong++;
+
+document.getElementById("result").innerHTML=
+"<span class='bad'>❌ Falsch! Antwort: "+currentAnswer+"</span>";
+}
+
+updateUI();
+savePlayer();
+
+if(score>=50){
+alert("🏆 GEWONNEN!");
+location.reload();
+}
+
+setTimeout(nextQuestion,1200);
+}
+
+function updateUI(){
+document.getElementById("score").innerText=score;
+document.getElementById("correct").innerText=correct;
+document.getElementById("wrong").innerText=wrong;
+}
+
+// SPEICHERN
+function savePlayer(){
+
+let players=JSON.parse(localStorage.getItem("players")||"[]");
+
+let existing=players.find(p=>p.name===playerName);
+
+if(existing){
+existing.score=score;
+existing.correct=correct;
+existing.wrong=wrong;
+}else{
+players.push({name:playerName,score:score,correct:correct,wrong:wrong});
+}
+
+localStorage.setItem("players",JSON.stringify(players));
+}
+
+// ADMIN
+function openAdmin(){
+
+let pw=prompt("Admin Passwort:");
+
+if(pw!=="3120"){
+alert("Falsch!");
+return;
+}
+
+document.getElementById("adminPanel").style.display="block";
+
+let players=JSON.parse(localStorage.getItem("players")||"[]");
+
+players.sort((a,b)=>b.score-a.score);
+
+let html="<h3>Alle Spieler</h3>";
+
+players.forEach(p=>{
+html+="<p><b>"+p.name+"</b> | ⭐ "+p.score+" | ✅ "+p.correct+" | ❌ "+p.wrong+"</p>";
+});
+
+document.getElementById("adminContent").innerHTML=html;
+}
+
+function closeAdmin(){
+document.getElementById("adminPanel").style.display="none";
+}
+
+</script>
+
+</body>
+</html>
